@@ -4,16 +4,11 @@ from Crypto.Hash import SHA256
 import os
 import base64
 
-
-def generate_keys(username):
+def generate_keys_in_memory():
     key = RSA.generate(2048)
-    private_key = key.export_key()
-    public_key = key.publickey().export_key()
-
-    with open(f'keys/{username}_private.pem', 'wb') as f:
-        f.write(private_key)
-    with open(f'keys/{username}_public.pem', 'wb') as f:
-        f.write(public_key)
+    private_key = key
+    public_key = key.publickey()
+    return private_key, public_key
 
 def load_keys(username):
     with open(f'keys/{username}_private.pem', 'rb') as f:

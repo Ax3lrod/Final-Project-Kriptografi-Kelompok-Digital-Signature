@@ -2,7 +2,7 @@ import streamlit as st
 import json
 import os
 
-from crypto_utils import generate_keys, load_keys, sign_data, verify_signature
+from crypto_utils import generate_keys_in_memory, load_keys, sign_data, verify_signature
 from blockchain_utils import (
     load_blockchain,
     add_block,
@@ -25,6 +25,24 @@ def load_petitions():
 st.set_page_config(page_title="Digital Petition", layout="centered")
 st.title("🖋️ Digital Petition with Verified Signers")
 
+if 'username' not in st.session_state:
+    st.sidebar.error("⚠️ Silakan login terlebih dahulu")
+    st.subheader("🔐 Login / Daftar")
+    username_input = st.text_input("Masukkan Username")
+
+    if st.button("Login / Daftar"):
+        if not username_input.strip():
+            st.warning("Username tidak boleh kosong.")
+        else:
+            from crypto_utils import generate_keys_in_memory
+            private_key, public_key = generate_keys_in_memory()
+            st.session_state.username = username_input
+            st.session_state.private_key = private_key
+            st.session_state.public_key = public_key
+            st.success(f"Login sebagai {username_input}")
+            st.rerun()
+    st.stop()  # hentikan semua eksekusi kecuali login
+
 menu = st.sidebar.selectbox("Menu", [
     "Tandatangani Petisi",
     "Buat Petisi Baru",
@@ -33,6 +51,11 @@ menu = st.sidebar.selectbox("Menu", [
     "📊 Statistik Petisi"
 ])
 
+if 'username' in st.session_state:
+    st.sidebar.markdown(f"👤 Login sebagai **{st.session_state.username}**")
+    if st.sidebar.button("Logout"):
+        st.session_state.clear()
+        st.rerun()
 
 if menu == "Tandatangani Petisi":
     petitions = load_petitions()
@@ -40,28 +63,35 @@ if menu == "Tandatangani Petisi":
     if not petitions:
         st.warning("Belum ada petisi yang tersedia.")
     else:
-        username = st.text_input("Nama Anda", key="name_input")
-        # Buat mapping: "Judul Petisi" -> ID
+        username = st.session_state.username
+        private_key = st.session_state.private_key
+        public_key = st.session_state.public_key
+
+        chain = load_blockchain()
+        signed_petitions = {
+            block['petition_id'] for block in chain if block['username'] == username
+        }
+
+        hide_signed = st.checkbox("Sembunyikan petisi yang sudah saya tandatangani.", value=True)
+
+        filtered_petitions = {
+            pid: text for pid, text in petitions.items()
+            if not (hide_signed and pid in signed_petitions)
+        }
+
+        if not filtered_petitions:
+            st.info("Tidak ada petisi yang tersedia untuk ditandatangani.")
+            st.stop()
+
         petition_titles = {
-            f"[{pid}] {petitions[pid][:60]}{'...' if len(petitions[pid]) > 60 else ''}": pid
-            for pid in petitions
+            f"[{pid}] {filtered_petitions[pid][:60]}{'...' if len(filtered_petitions[pid]) > 60 else ''}": pid
+            for pid in filtered_petitions
         }
         title_selected = st.selectbox("Pilih Petisi", list(petition_titles.keys()))
         petition_id = petition_titles[title_selected]
 
 
         if st.button("Tandatangani"):
-            if username.strip() == "":
-                st.error("Nama tidak boleh kosong.")
-            else:
-                # Generate key jika belum ada
-                priv_path = f'keys/{username}_private.pem'
-                if not os.path.exists(priv_path):
-                    generate_keys(username)
-                    st.success("RSA key baru dibuat.")
-
-                private_key, public_key = load_keys(username)
-
                 # Ambil teks petisi
                 petition_text = petitions[petition_id]
 
@@ -70,13 +100,10 @@ if menu == "Tandatangani Petisi":
                 signature = sign_data(message, private_key)
 
                 # Cegah user menandatangani petisi sama lebih dari sekali
-                chain = load_blockchain()
-                for block in chain:
-                    if block['username'] == username and block['petition_id'] == petition_id:
-                        st.warning("Anda sudah menandatangani petisi ini sebelumnya.")
-                        st.stop()
-
-
+                if petition_id in signed_petitions:
+                    st.warning("Anda sudah menandatangani petisi ini.")
+                    st.stop()
+                    
                 # Tambahkan ke blockchain
                 new_block = add_block(username, petition_id, signature, public_key.export_key().decode())
 
@@ -85,10 +112,23 @@ if menu == "Tandatangani Petisi":
 
 elif menu == "Lihat Blockchain":
     st.subheader("⛓️ Blockchain Data")
+    username = st.session_state.username
     chain = load_blockchain()
-    for block in chain:
-        with st.expander(f"Block {block['index']}"):
-            st.json(block)
+
+    # Tambahkan toggle pilihan filter
+    filter_mode = st.radio("Tampilkan blok:", ["Semua", "Hanya Saya"], horizontal=True)
+
+    if filter_mode == "Hanya Saya":
+        filtered_chain = [block for block in chain if block['username'] == username]
+    else:
+        filtered_chain = chain
+
+    if not filtered_chain:
+        st.info("Tidak ada data blockchain yang tersedia.")
+    else:
+        for block in filtered_chain:
+            with st.expander(f"Block {block['index']}"):
+                st.json(block)
 
 elif menu == "Validasi Chain":
     st.subheader("✅ Validasi Integritas Blockchain")
@@ -100,8 +140,6 @@ elif menu == "Validasi Chain":
         st.success(f"🔐 Signature: {msg_sig}")
     else:
         st.error(f"🔐 Signature: {msg_sig}")
-
-
 
     if valid:
         st.success(msg)
