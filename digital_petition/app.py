@@ -33,14 +33,6 @@ def save_users_db(db):
     with open(USERS_DB_FILE, 'w') as f:
         json.dump(db, f, indent=4)
 
-
-# --------------- Load Petisi ---------------
-def load_petitions():
-    if not os.path.exists(PETITION_FILE):
-        return {}
-    with open(PETITION_FILE, 'r') as f:
-        return json.load(f)
-
 # --------------- UI Streamlit ---------------
 st.set_page_config(page_title="Digital Petition", layout="centered")
 st.title("🖋️ Digital Petition with Verified Signers")
@@ -91,8 +83,9 @@ if 'username' in st.session_state:
         st.rerun()
 
 if menu == "Tandatangani Petisi":
-    petitions = load_petitions()
-
+    chain = load_blockchain()
+    petitions = {block['transaction_data']['petition_id']: block['transaction_data']['petition_text'] for block in chain if block['transaction_type'] == 'CREATE_PETITION'}
+ 
     if not petitions:
         st.warning("Belum ada petisi yang tersedia.")
     else:
@@ -130,8 +123,12 @@ if menu == "Tandatangani Petisi":
                 if petition_id in signed_petitions:
                     st.warning("Anda sudah menandatangani petisi ini.")
                 else:
-                    # PERUBAHAN: Memanggil add_block tanpa public_key
-                    new_block = add_block(username, petition_id, signature)
+                    # Call add_block with the correct parameters
+                    new_block = add_block("SIGN_PETITION", {
+                    "signer_username": username,
+                    "petition_id": petition_id,
+                    "signature": signature
+                    })
                     st.success("Petisi berhasil ditandatangani!")
                     st.json(new_block)
                     # refresh untuk update daftar petisi
@@ -139,25 +136,11 @@ if menu == "Tandatangani Petisi":
 
 elif menu == "Lihat Blockchain":
     st.subheader("⛓️ Blockchain Data")
-    username = st.session_state.username
     chain = load_blockchain()
 
-    filter_mode = st.radio("Tampilkan blok:", ["Semua", "Hanya Saya"], horizontal=True)
-
-    if filter_mode == "Hanya Saya":
-        filtered_chain = [block for block in chain if block.get('username') == username]
-    else:
-        filtered_chain = chain
-
-    if not filtered_chain or len(filtered_chain) <=1 and filter_mode == "Hanya Saya":
-        st.info("Tidak ada data blockchain yang relevan untuk ditampilkan.")
-    else:
-        for block in filtered_chain:
-            # Tampilkan semua blok kecuali genesis jika filter "Hanya Saya"
-            if filter_mode == "Hanya Saya" and block['username'] == 'genesis':
-                continue
-            with st.expander(f"Block {block['index']} - User: {block['username']}"):
-                st.json(block)
+    for block in chain:
+        with st.expander(f"Block {block['index']} - User: {block['transaction_data'].get('creator', 'Unknown')}"):
+            st.json(block)
 
 elif menu == "Validasi Chain":
     st.subheader("✅ Validasi Integritas Blockchain")
@@ -176,13 +159,18 @@ elif menu == "Validasi Chain":
 
 elif menu == "📊 Statistik Petisi":
     st.subheader("📈 Statistik Jumlah Penandatangan per Petisi")
-    petitions = load_petitions()
+    #petitions = load_petitions()
     chain = load_blockchain()
+    petitions = {
+        block['transaction_data']['petition_id']: block['transaction_data']['petition_text']
+        for block in chain if block['transaction_type'] == 'CREATE_PETITION'
+    }
     signer_counts = {pid: 0 for pid in petitions.keys()}
-    for block in chain[1:]:
-        pid = block['petition_id']
-        if pid in signer_counts:
-            signer_counts[pid] += 1
+    for block in chain:
+        if block['transaction_type'] == 'SIGN_PETITION':
+            pid = block['transaction_data'].get('petition_id')
+            if pid in signer_counts:
+                signer_counts[pid] += 1
     if not any(signer_counts.values()):
         st.info("Belum ada penandatangan.")
     else:
@@ -199,12 +187,10 @@ elif menu == "Buat Petisi Baru":
         if petition_id.strip() == "" or petition_text.strip() == "":
             st.warning("ID dan isi petisi tidak boleh kosong.")
         else:
-            if os.path.exists(PETITION_FILE):
-                with open(PETITION_FILE, "r") as f: data = json.load(f)
-            else: data = {}
-            if petition_id in data:
-                st.error("ID petisi sudah digunakan. Coba ID lain.")
-            else:
-                data[petition_id] = petition_text
-                with open(PETITION_FILE, "w") as f: json.dump(data, f, indent=4)
-                st.success(f"Petisi '{petition_id}' berhasil ditambahkan.")
+            # Create a new block for the petition
+            new_block = add_block("CREATE_PETITION", {
+                "petition_id": petition_id,
+                "petition_text": petition_text,
+                "creator": st.session_state.username
+            })
+            st.success(f"Petisi '{petition_id}' berhasil ditambahkan.")
