@@ -1,0 +1,25 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+venv/
+.env
+
+# Streamlit logs/config (opsional)
+.streamlit/
+
+# RSA keys - jangan unggah kunci privat/public pengguna
+digital_petition/keys/
+*.pem
+
+# Data lokal - blockchain dan petisi
+digital_petition/blockchain.json
+digital_petition/petition_data.json
+
+# OS/system
+.DS_Store
+Thumbs.db
+
+# VSCode config (jika pakai)
+.vscode/
