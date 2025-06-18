@@ -4,9 +4,16 @@ import time
 import os
 
 BLOCKCHAIN_FILE = 'blockchain.json'
+USERS_DB_FILE = 'users.json'
+
+def load_users_db():
+    if not os.path.exists(USERS_DB_FILE):
+        return {}
+    with open(USERS_DB_FILE, 'r') as f:
+        return json.load(f)
 
 def calculate_hash(block):
-    block_string = f"{block['index']}{block['timestamp']}{block['username']}{block['petition_id']}{block['signature']}{block['public_key']}{block['previous_hash']}"
+    block_string = f"{block['index']}{block['timestamp']}{block['username']}{block['petition_id']}{block['signature']}{block['previous_hash']}"
     return hashlib.sha256(block_string.encode()).hexdigest()
 
 def create_genesis_block():
@@ -16,7 +23,6 @@ def create_genesis_block():
         'username': 'genesis',
         'petition_id': '0',
         'signature': '',
-        'public_key': '',
         'previous_hash': '0',
         'hash': ''
     }
@@ -48,7 +54,7 @@ def save_blockchain(chain):
 def get_last_block(chain):
     return chain[-1]
 
-def add_block(username, petition_id, signature, public_key):
+def add_block(username, petition_id, signature):
     chain = load_blockchain()
     last_block = get_last_block(chain)
 
@@ -58,7 +64,6 @@ def add_block(username, petition_id, signature, public_key):
         'username': username,
         'petition_id': petition_id,
         'signature': signature,
-        'public_key': public_key,
         'previous_hash': last_block['hash'],
         'hash': ''
     }
@@ -85,17 +90,22 @@ from crypto_utils import verify_signature
 
 def validate_signatures():
     chain = load_blockchain()
+    users_db = load_users_db()
+
     if len(chain) <= 1:
         return True, "Tidak ada signature untuk diverifikasi."
 
-    for i in range(1, len(chain)):  # Skip genesis
+    for i in range(1, len(chain)):
         block = chain[i]
         username = block['username']
         petition_id = block['petition_id']
         signature = block['signature']
-        public_key_str = block['public_key']
-        petition_text = load_petition_text(petition_id)
 
+        public_key_str = users_db.get(username)
+        if public_key_str is None:
+            return False, f"Kunci publik untuk user '{username}' tidak ditemukan di registri pada blok ke-{i}"
+
+        petition_text = load_petition_text(petition_id)
         if petition_text is None:
             return False, f"Petisi {petition_id} tidak ditemukan untuk blok ke-{i}"
 
