@@ -123,7 +123,7 @@ def validate_signatures():
             if public_key_str is None:
                 return False, f"Kunci publik untuk user '{username}' tidak ditemukan di registri pada blok ke-{i}"
 
-            petition_text = load_petition_text(petition_id)
+            petition_text = load_petition_text(petition_id, chain)
             if petition_text is None:
                 return False, f"Petisi {petition_id} tidak ditemukan untuk blok ke-{i}"
 
@@ -133,10 +133,11 @@ def validate_signatures():
                 return False, f"Signature tidak valid pada blok ke-{i} oleh {username}"
     return True, "Semua signature valid."
 
-def load_petition_text(pid):
-    # Helper: ambil teks petisi 
-    if not os.path.exists("petition_data.json"):
-        return None
-    with open("petition_data.json", "r") as f:
-        petitions = json.load(f)
-    return petitions.get(pid, None)
+def load_petition_text(pid, chain):
+    # Helper: Ambil teks petisi dengan mencarinya di dalam blockchain.
+    for block in chain:
+        if block.get('transaction_type') == 'CREATE_PETITION':
+            tx_data = block.get('transaction_data', {})
+            if tx_data.get('petition_id') == pid:
+                return tx_data.get('petition_text')
+    return None
