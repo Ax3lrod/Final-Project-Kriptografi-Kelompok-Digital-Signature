@@ -12,7 +12,7 @@
 | 6. | Kevin Anugerah Faza          | 5027231027 | Designer Struktur Transaksi Blockchain       |
 | 7. | Muhammad Faqih Husain        | 5027231023 | Arsitektur Awal Proyek dan Membangun Fondasi |
 | 8. | Adlya Isriena Aftarisya      | 5027231066 | Pengembangan Fitur Analitik dan Profil       |
-| 9. | Falisha Tazkia               | 5027231076 | Pengembangan Halaman dan Detail Verifikasi   |
+| 9. | Falisha Tazkia               | 5008221076 | Pengembangan Halaman dan Detail Verifikasi   |
 
 # Digital Petition: Sistem Tanda Tangan Petisi Digital
 Digital Petition merupakan aplikasi web yang menyediakan alur kerja menyeluruh untuk membuat, menandatangani dan memverifikasi tanda tangan petisi secara digital. Pengguna dapat membuat akun dan menghasilkan pasangan kunci RSA, membuat petisi, serta memberikan dukungan dengan menandatangani petisi secara digital. Setiap transaksi yang dilakukan akan dicatat ke dalam blockchain lokal yang aman, sehingga menjamin integritas dan transparansi data secara menyeluruh.
