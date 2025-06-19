@@ -46,24 +46,24 @@ Aplikasi ini menggunakan sistem keamanan yang berupa kombinasi dari fungsi hash 
 
 ## Proses Penandatanganan (Signing Process)
 Ketika seseorang menandatangani suatu petisi pada aplikasi, maka proses berikut akan terjadi:
-**1. Membetuk Pesan**
->Sistem akan membentuk pesan unik yang terdiri dari gabungan teks lengkap petisi dan username penandatangan.
-**2. Hasing**
->Pesan akan di-hash dengan menggunakan algoritma SHA-256 untuk menghasilkan message digest.
-**3. Eknripsi Hash**
->Hash akan dienkripsi dengan menggunakan **kunci privat** pengguna dengan algoritma RSA, yang dimana hasil enkripsi ini adalah *Digital Signature*.
-**4. Pencatatan Transaksi**
-> Tanda tangan ini, bersama dengan username dan petition ID akan dicatat sebagai blok transaksi dalam blockchain.
+
+**1. Membetuk Pesan**: Sistem akan membentuk pesan unik yang terdiri dari gabungan teks lengkap petisi dan username penandatangan.
+
+**2. Hasing**: Pesan akan di-hash dengan menggunakan algoritma SHA-256 untuk menghasilkan message digest.
+
+**3. Eknripsi Hash**: Hash akan dienkripsi dengan menggunakan **kunci privat** pengguna dengan algoritma RSA, yang dimana hasil enkripsi ini adalah *Digital Signature*.
+
+**4. Pencatatan Transaksi**: Tanda tangan ini, bersama dengan username dan petition ID akan dicatat sebagai blok transaksi dalam blockchain.
 
 ## Proses Verifikasi (Verification Process)
-**1. Pengambilan Data**
-> Mengambil data tanda tangan, username, dan petition ID dari blok transaksi dalam blockchain.
-**2. Pengambilan Kunci Publik**
-> Kunci publik penandatangan diambil dari `users.json` berdasarkan username penandatangan.
-**3. Pembentukan Ulang Pesan**
-> Sistem akan membentuk ulang pesan yang sama persis dengan penandatangan.
-**4. Verifikasi Tanda Tangan**
-> Menghitung hash dari pesan yang dibentuk ulang, menggunakan kunci publik untuk mendekripsi tanda tangan digital dan mendapatkan hash asli, lalu membandingkan kedua has, jika identik maka dinyatakan *valid*, jika tidak maka *tidak valid*.
+
+**1. Pengambilan Data**: Mengambil data tanda tangan, username, dan petition ID dari blok transaksi dalam blockchain.
+ 
+**2. Pengambilan Kunci Publik**: Kunci publik penandatangan diambil dari `users.json` berdasarkan username penandatangan.
+
+**3. Pembentukan Ulang Pesan**: Sistem akan membentuk ulang pesan yang sama persis dengan penandatangan.
+
+**4. Verifikasi Tanda Tangan**: Menghitung hash dari pesan yang dibentuk ulang, menggunakan kunci publik untuk mendekripsi tanda tangan digital dan mendapatkan hash asli, lalu membandingkan kedua has, jika identik maka dinyatakan *valid*, jika tidak maka *tidak valid*.
 
 ## Integritas Blockchain
 Blockchain dapat menjamin integritas data dengan melalui mekanisme **chained-hashing**, yang dimana:
