@@ -7,6 +7,7 @@ import pandas as pd
 from datetime import datetime
 import plotly.express as px
 import plotly.graph_objects as go
+import time
 
 # Mengimpor fungsi yang diperlukan, termasuk perbaikan bug 'verify_signature' not defined
 from crypto_utils import generate_keys_in_memory, sign_data, verify_signature
@@ -158,45 +159,61 @@ if 'username' not in st.session_state:
                 st.rerun()
     st.stop()
 
-
 # --- Navigasi Sidebar Setelah Login ---
 st.sidebar.success(f"👤 Login sebagai **{st.session_state.username}**")
 st.sidebar.header("Menu Navigasi")
-menu = st.sidebar.radio(
-    "Pilih Halaman:",
-    (
-        "Lihat & Tandatangani Petisi",
-        "🔍 Pencarian Petisi",
-        "Buat Petisi Baru",
-        "📊 Statistik Petisi",
-        "👤 Profil Saya",
-        "Lihat Blockchain",
-        "Validasi Chain"
-    ),
-    captions=[
-        "Lihat daftar petisi yang ada.",
-        "Cari petisi berdasarkan ID atau teks.",
-        "Mulai petisi Anda sendiri.",
-        "Visualisasi data penandatangan.",
-        "Aktivitas petisi Anda.",
-        "Inspeksi data mentah blockchain.",
-        "Periksa integritas data."
-    ]
-)
+
+# PERBAIKAN: Check redirect SEBELUM radio button
+if st.session_state.get('redirect_to_petition', False):
+    st.session_state['redirect_to_petition'] = False
+    menu = "Lihat & Tandatangani Petisi"
+    
+    # PERBAIKAN: Tetap tampilkan sidebar untuk navigasi
+    st.sidebar.info("📍 Menampilkan hasil pencarian", icon="🔍")
+    st.sidebar.radio(
+        "Navigasi:",
+        (
+            "Lihat & Tandatangani Petisi",
+            "🔍 Pencarian Petisi", 
+            "Buat Petisi Baru",
+            "📊 Statistik Petisi",
+            "👤 Profil Saya",
+            "Lihat Blockchain",
+            "Validasi Chain"
+        ),
+        index=0,  # Auto-select current page
+        disabled=False,
+        key="sidebar_after_redirect"
+    )
+else:
+    menu = st.sidebar.radio(
+        "Pilih Halaman:",
+        (
+            "Lihat & Tandatangani Petisi",
+            "🔍 Pencarian Petisi",
+            "Buat Petisi Baru",
+            "📊 Statistik Petisi",
+            "👤 Profil Saya",
+            "Lihat Blockchain",
+            "Validasi Chain"
+        ),
+        captions=[
+            "Lihat daftar petisi yang ada.",
+            "Cari petisi berdasarkan ID atau teks.",
+            "Mulai petisi Anda sendiri.",
+            "Visualisasi data penandatangan.",
+            "Aktivitas petisi Anda.",
+            "Inspeksi data mentah blockchain.",
+            "Periksa integritas data."
+        ]
+    )
 
 if st.sidebar.button("Logout", use_container_width=True):
     for key in list(st.session_state.keys()):
         del st.session_state[key]
     st.rerun()
 
-
 # --- Konten Halaman ---
-
-# Check for redirects dari pencarian (tambahkan sebelum menu conditions)
-if st.session_state.get('redirect_to_petition', False):
-    st.session_state['redirect_to_petition'] = False
-    menu = "Lihat & Tandatangani Petisi"
-
 if menu == "🔍 Pencarian Petisi":
     st.subheader("🔍 Pencarian Petisi")
     
@@ -224,11 +241,12 @@ if menu == "🔍 Pencarian Petisi":
                         st.text(result['text'])
                         
                         if st.button(f"Lihat Detail & Tandatangani", key=f"view_{result['id']}"):
+                            # Set session state untuk redirect
                             st.session_state['selected_petition_from_search'] = result['id']
                             st.session_state['redirect_to_petition'] = True
+                            st.session_state['came_from_search'] = True
                             st.rerun()
 
-# Perbaikan bug: Menyamakan nama menu di list dan di kondisi if
 elif menu == "Lihat & Tandatangani Petisi":
     st.subheader("📜 Daftar Petisi Publik")
     
@@ -254,25 +272,19 @@ elif menu == "Lihat & Tandatangani Petisi":
     
     # Check if petition selected from search
     selected_from_search = st.session_state.get('selected_petition_from_search')
-    
-    # Check if user just signed a petition (untuk maintain selection setelah sign)
     just_signed_petition = st.session_state.get('just_signed_petition')
     
     if selected_from_search and selected_from_search in petition_titles.values():
         default_index = list(petition_titles.values()).index(selected_from_search)
         st.session_state.pop('selected_petition_from_search', None)
-        # Set flag untuk maintain selection setelah sign
         st.session_state['maintain_petition_selection'] = selected_from_search
         
-        # Tampilkan notifikasi bahwa user datang dari pencarian
         st.info(f"📍 Menampilkan petisi hasil pencarian: **{selected_from_search}**", icon="🔍")
     elif just_signed_petition and just_signed_petition in petition_titles.values():
-        # Maintain selection untuk petisi yang baru ditandatangani
         default_index = list(petition_titles.values()).index(just_signed_petition)
         st.session_state.pop('just_signed_petition', None)
         st.success(f"✅ Tanda tangan berhasil ditambahkan untuk petisi: **{just_signed_petition}**", icon="🎉")
     elif st.session_state.get('maintain_petition_selection') and st.session_state.get('maintain_petition_selection') in petition_titles.values():
-        # Maintain selection dari pencarian setelah berbagai operasi
         default_index = list(petition_titles.values()).index(st.session_state['maintain_petition_selection'])
     else:
         default_index = 0
@@ -298,13 +310,13 @@ elif menu == "Lihat & Tandatangani Petisi":
         
         st.markdown("---")
         
-        # PERBAIKAN: Reload blockchain data untuk memastikan data terbaru
-        chain = load_blockchain()  # Reload untuk data terbaru
-        users_db = load_users_db()  # Reload users database
+        # Reload data untuk yang terbaru
+        chain = load_blockchain()
+        users_db = load_users_db()
         
         # Bagian Penandatangan
         with st.container(border=True):
-            st.markdown("#### ✍️ Daftar Penandatangani")
+            st.markdown("#### ✍️ Daftar Penandatangan")
             
             signers = [b for b in chain if b['transaction_type'] == 'SIGN_PETITION' and b['transaction_data'].get('petition_id') == petition_id]
 
@@ -318,7 +330,7 @@ elif menu == "Lihat & Tandatangani Petisi":
                     signature = tx_data['signature']
                     
                     public_key_str = users_db.get(signer_username)
-                    if public_key_str:  # Pastikan public key ada
+                    if public_key_str:
                         message_to_verify = petition_text + signer_username
                         is_valid = verify_signature(message_to_verify, signature, public_key_str)
                         status_icon = "✅ Valid" if is_valid else "❌ Tidak Valid"
@@ -346,31 +358,38 @@ elif menu == "Lihat & Tandatangani Petisi":
             st.success("👍 Anda sudah menandatangani petisi ini.", icon="✔️")
         else:
             st.write(f"Anda, **{current_user}**, belum menandatangani petisi ini.")
-            if st.button(f"Tandatangani Petisi Ini Sekarang!", type="primary", use_container_width=True):
+            
+            # PERBAIKAN: Button key yang stabil, tidak berubah setiap render
+            if 'button_click_count' not in st.session_state:
+                st.session_state.button_click_count = 0
+            
+            button_key = f"sign_{petition_id}_{current_user}"
+            
+            if st.button(f"Tandatangani Petisi Ini Sekarang!", type="primary", use_container_width=True, key=button_key):
                 private_key = st.session_state.private_key
                 message_to_sign = petition_text + current_user
                 signature = sign_data(message_to_sign, private_key)
 
+                block_data = {
+                    "signer_username": current_user,
+                    "petition_id": petition_id,
+                    "signature": signature
+                }
+
                 with st.spinner("Menambahkan tanda tangan Anda ke blockchain..."):
-                    # Pastikan blockchain tersimpan dengan benar
-                    success = add_block("SIGN_PETITION", {
-                        "signer_username": current_user,
-                        "petition_id": petition_id,
-                        "signature": signature
-                    })
+                    success = add_block("SIGN_PETITION", block_data)
                 
-                # Set flag untuk maintain selection setelah signing
-                st.session_state['just_signed_petition'] = petition_id
-                st.session_state['maintain_petition_selection'] = petition_id
-                
-                st.success("Petisi berhasil ditandatangani! Halaman akan dimuat ulang.", icon="🎉")
-                st.balloons()
-                
-                # Clear cache jika ada
-                if hasattr(st, 'cache_data'):
-                    st.cache_data.clear()
-                
-                st.rerun()
+                if success:
+                    st.session_state['just_signed_petition'] = petition_id
+                    st.session_state['maintain_petition_selection'] = petition_id
+                    
+                    st.success("Petisi berhasil ditandatangani! Halaman akan dimuat ulang.", icon="🎉")
+                    st.balloons()
+                    
+                    time.sleep(2)  # Berikan waktu lebih untuk melihat pesan
+                    st.rerun()
+                else:
+                    st.error("Gagal menambahkan tanda tangan ke blockchain.")
 
 elif menu == "Buat Petisi Baru":
     st.subheader("📝 Buat Petisi Baru")
@@ -558,7 +577,7 @@ elif menu == "📊 Statistik Petisi":
                 st.info("Belum ada penandatangan pada petisi manapun.", icon="🚶‍♀️")
         
         with tab2:
-            st.markdown("#### Distribusi Penandatangan (Pie Chart)")
+            st.markdown("#### Distribusi Penandatangani (Pie Chart)")
             if any(p['signers'] for p in petitions.values()):
                 pie_data = []
                 for pid, data in petitions.items():
@@ -574,7 +593,7 @@ elif menu == "📊 Statistik Petisi":
                         pie_data, 
                         values='Penandatangani', 
                         names='Label',
-                        title="Distribusi Penandatangan per Petisi"
+                        title="Distribusi Penandatangani per Petisi"
                     )
                     fig.update_traces(textposition='inside', textinfo='percent+label')
                     st.plotly_chart(fig, use_container_width=True)
@@ -584,7 +603,7 @@ elif menu == "📊 Statistik Petisi":
                 st.info("Belum ada penandatangan untuk ditampilkan dalam pie chart.", icon="🥧")
         
         with tab3:
-            st.markdown("#### 📈 Tren Penandatanganan dari Waktu ke Waktu")
+            st.markdown("#### 📈 Tren Penandatangganan dari Waktu ke Waktu")
             if signers_data:
                 # Konversi ke DataFrame untuk analisis time series
                 df_time = pd.DataFrame(signers_data)
@@ -658,7 +677,7 @@ elif menu == "📊 Statistik Petisi":
                     ))
                     
                     fig.update_layout(
-                        title="Tren Penandatanganan per Jam",
+                        title="Tren Penandatangani per Jam",
                         xaxis_title="Waktu (Per Jam)",
                         yaxis_title="Tanda Tangan per Jam",
                         yaxis2=dict(
