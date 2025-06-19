@@ -1,6 +1,8 @@
 import streamlit as st
 import json
 import os
+import pandas as pd
+from datetime import datetime
 
 from crypto_utils import generate_keys_in_memory, sign_data
 from blockchain_utils import (
@@ -58,6 +60,9 @@ if 'username' not in st.session_state:
             else:
                 # Ini adalah login user yang sudah ada
                 private_key, public_key = generate_keys_in_memory()
+                # FIX: Update public key di DB agar cocok dengan private key sesi ini
+                users_db[username_input] = public_key.export_key().decode()
+                save_users_db(users_db)
 
             st.session_state.username = username_input
             st.session_state.private_key = private_key
@@ -82,57 +87,101 @@ if 'username' in st.session_state:
             del st.session_state[key]
         st.rerun()
 
-if menu == "Tandatangani Petisi":
+if menu == "Lihat Detail & Tanda Tangani Petisi":
+    st.subheader("📜 Detail Petisi dan Penandatangan")
+    
     chain = load_blockchain()
-    petitions = {block['transaction_data']['petition_id']: block['transaction_data']['petition_text'] for block in chain if block['transaction_type'] == 'CREATE_PETITION'}
- 
+    users_db = load_users_db()
+    
+    petitions = {
+        block['transaction_data']['petition_id']: {
+            "text": block['transaction_data']['petition_text'],
+            "creator": block['transaction_data'].get('creator', 'N/A')
+        }
+        for block in chain if block['transaction_type'] == 'CREATE_PETITION'
+    }
+
     if not petitions:
-        st.warning("Belum ada petisi yang tersedia.")
-    else:
-        username = st.session_state.username
-        private_key = st.session_state.private_key
+        st.warning("Belum ada petisi yang tersedia. Silakan buat petisi baru.")
+        st.stop()
 
-        chain = load_blockchain()
-        signed_petitions = {
-            block['petition_id'] for block in chain if block.get('username') == username
-        }
-
-        hide_signed = st.checkbox("Sembunyikan petisi yang sudah saya tandatangani.", value=True)
-
-        filtered_petitions = {
-            pid: text for pid, text in petitions.items()
-            if not (hide_signed and pid in signed_petitions)
-        }
-
-        if not filtered_petitions:
-            st.info("Tidak ada petisi yang tersedia untuk ditandatangani.")
-            st.stop()
-
-        petition_titles = {
-            f"[{pid}] {filtered_petitions[pid][:60]}{'...' if len(filtered_petitions[pid]) > 60 else ''}": pid
-            for pid in filtered_petitions
-        }
-        title_selected = st.selectbox("Pilih Petisi", list(petition_titles.keys()))
+    petition_titles = {
+        f"[{pid}] {petitions[pid]['text'][:60]}{'...' if len(petitions[pid]['text']) > 60 else ''}": pid
+        for pid in petitions
+    }
+    
+    title_selected = st.selectbox("Pilih Petisi untuk Dilihat Detailnya", list(petition_titles.keys()))
+    
+    if title_selected:
         petition_id = petition_titles[title_selected]
+        petition_data = petitions[petition_id]
+        petition_text = petition_data['text']
+        
+        st.markdown("---")
+        
+        st.markdown(f"### Petisi: `{petition_id}`")
+        st.markdown(f"**Dibuat oleh:** `{petition_data['creator']}`")
+        with st.expander("Lihat Teks Lengkap Petisi"):
+            st.text(petition_text)
 
-        if st.button("Tandatangani"):
-                petition_text = petitions[petition_id]
-                message = petition_text + username
-                signature = sign_data(message, private_key)
+        st.markdown("---")
+        
+        st.markdown("#### ✍️ Daftar Penandatangan")
+        
+        signers = []
+        for block in chain:
+            if block['transaction_type'] == 'SIGN_PETITION' and block['transaction_data'].get('petition_id') == petition_id:
+                signers.append(block)
 
-                if petition_id in signed_petitions:
-                    st.warning("Anda sudah menandatangani petisi ini.")
-                else:
-                    # Call add_block with the correct parameters
-                    new_block = add_block("SIGN_PETITION", {
-                    "signer_username": username,
+        if not signers:
+            st.info("Belum ada yang menandatangani petisi ini.")
+        else:
+            display_data = []
+            for block in signers:
+                tx_data = block['transaction_data']
+                signer_username = tx_data['signer_username']
+                signature = tx_data['signature']
+                
+                public_key_str = users_db.get(signer_username)
+                message_to_verify = petition_text + signer_username
+                is_valid = verify_signature(message_to_verify, signature, public_key_str)
+                
+                status_icon = "✅ Valid" if is_valid else "❌ Tidak Valid"
+                timestamp_formatted = datetime.fromtimestamp(block['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
+
+                display_data.append({
+                    "Penandatangan": signer_username,
+                    "Waktu Tanda Tangan": timestamp_formatted,
+                    "Status Verifikasi": status_icon
+                })
+            
+            df_signers = pd.DataFrame(display_data)
+            st.table(df_signers)
+
+        st.markdown("---")
+        
+        current_user = st.session_state.username
+        signer_usernames = [s['transaction_data']['signer_username'] for s in signers]
+
+        if current_user in signer_usernames:
+            st.success("👍 Anda sudah menandatangani petisi ini.")
+        else:
+            st.write("Anda belum menandatangani petisi ini.")
+            if st.button(f"Saya, {current_user}, Ingin Menandatangani Petisi Ini"):
+                private_key = st.session_state.private_key
+                message_to_sign = petition_text + current_user
+
+                signature = sign_data(message_to_sign, private_key)
+
+                new_block = add_block("SIGN_PETITION", {
+                    "signer_username": current_user,
                     "petition_id": petition_id,
                     "signature": signature
-                    })
-                    st.success("Petisi berhasil ditandatangani!")
-                    st.json(new_block)
-                    # refresh untuk update daftar petisi
-                    st.rerun()
+                })
+                
+                st.success("Petisi berhasil ditandatangani! Halaman akan dimuat ulang.")
+                st.json(new_block)
+                st.rerun()
 
 elif menu == "Lihat Blockchain":
     st.subheader("⛓️ Blockchain Data")
