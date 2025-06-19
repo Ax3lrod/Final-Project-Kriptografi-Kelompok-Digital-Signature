@@ -120,7 +120,14 @@ Jika sudah menekan tombol tersebut, akan menampilkan hasil seperti berikut.
 
 ## 7. Halaman Statistik Petisi
 User dapat memantau data jumlah penandatangan dan jumlah petisi dalam bentuk distribusi penandatangan, piechart, dan tren waktu.
+- Distribusi Penandatangan
 ![image](https://github.com/user-attachments/assets/ce0a16db-dba4-4cb0-a98c-ca8be58d831c)
+
+- Piechart
+![image](https://github.com/user-attachments/assets/be8e895d-b7dd-49e9-81a8-f417d7252e37)
+
+- Tren Waktu
+![image](https://github.com/user-attachments/assets/13863e22-460c-4692-8a1c-598d4e0b4314)
 
 ## 8. Halaman Lihat Blockchain
 User dapat melihat transaksi yang dilakukan oleh semua pengguna pada halaman blockchain. Halaman ini berfungsi sebagai bentuk keamanan dan transparansi tanda tangan dengan menampilkan data mentah blockchain.
