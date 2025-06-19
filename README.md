@@ -2,8 +2,8 @@
 
 ## Anggota Kelompok 2
 
-| No | Nama Anggota                 | NRP        | Job Description |
-|----|------------------------------|------------|
+| No | Nama Anggota                 | NRP        | Job Description                            |
+|----|------------------------------|------------|--------------------------------------------|
 | 1. | Karissa Maheswari Sasikirana | 5048221013 | Penulisan Dokumentasi dan Laporan Akhir    |
 | 2. | Achmad Rayhan Purnomo        | 5048221018 | Integrator UI-to-Blockchain                |
 | 3. | Aryasatya Alaauddin          | 5027231082 | Manajer Identitas dan Kunci Publik         |
