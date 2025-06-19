@@ -1,4 +1,4 @@
-# Final-Project-Kriptografi-Kelompok-Digital-Signature
+# Final Project Kriptografi - Digital Signature
 
 ```
 streamlit run app.py
