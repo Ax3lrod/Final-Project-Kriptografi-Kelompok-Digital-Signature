@@ -141,16 +141,18 @@ if 'username' not in st.session_state:
             else:
                 users_db = load_users_db()
                 if username_input not in users_db:
+                 # Username belum ada → buat akun baru dengan pasangan key baru
                     st.info(f"Username '{username_input}' belum terdaftar. Membuat akun baru...", icon="✨")
                     private_key, public_key = generate_keys_in_memory()
                     users_db[username_input] = public_key.export_key().decode()
                     save_users_db(users_db)
-                    st.success(f"Akun baru untuk '{username_input}' berhasil dibuat!")
                 else:
-                    private_key, public_key = generate_keys_in_memory()
-                    # FIX: Update public key di DB agar cocok dengan private key sesi ini
-                    users_db[username_input] = public_key.export_key().decode()
-                    save_users_db(users_db)
+                    # Username sudah ada → ambil public key dari database
+                    public_key_pem = users_db[username_input]
+                    public_key = public_key_pem.encode()
+
+                    # Buat private key baru hanya untuk sesi ini (⚠ tidak cocok untuk verifikasi signature lama)
+                    private_key, _ = generate_keys_in_memory()
                 
                 st.session_state.username = username_input
                 st.session_state.private_key = private_key
@@ -163,12 +165,12 @@ if 'username' not in st.session_state:
 st.sidebar.success(f"👤 Login sebagai **{st.session_state.username}**")
 st.sidebar.header("Menu Navigasi")
 
-# PERBAIKAN: Check redirect SEBELUM radio button
+# Check redirect SEBELUM radio button
 if st.session_state.get('redirect_to_petition', False):
     st.session_state['redirect_to_petition'] = False
     menu = "Lihat & Tandatangani Petisi"
     
-    # PERBAIKAN: Tetap tampilkan sidebar untuk navigasi
+    # Tetap tampilkan sidebar untuk navigasi
     st.sidebar.info("📍 Menampilkan hasil pencarian", icon="🔍")
     st.sidebar.radio(
         "Navigasi:",
@@ -359,7 +361,7 @@ elif menu == "Lihat & Tandatangani Petisi":
         else:
             st.write(f"Anda, **{current_user}**, belum menandatangani petisi ini.")
             
-            # PERBAIKAN: Button key yang stabil, tidak berubah setiap render
+            # Button key yang stabil, tidak berubah setiap render
             if 'button_click_count' not in st.session_state:
                 st.session_state.button_click_count = 0
             
