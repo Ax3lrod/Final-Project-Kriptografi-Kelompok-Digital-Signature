@@ -163,57 +163,152 @@ if 'username' not in st.session_state:
 
 # --- Navigasi Sidebar Setelah Login ---
 st.sidebar.success(f"👤 Login sebagai **{st.session_state.username}**")
-st.sidebar.header("Menu Navigasi")
 
-# Check redirect SEBELUM radio button
+# Custom CSS untuk styling sidebar menu
+st.markdown("""
+<style>
+/* Sidebar Navigation Styling */
+.sidebar .sidebar-content {
+    background-color: #f8f9fa;
+}
+
+/* Menu Section Headers */
+.nav-section {
+    margin: 20px 0 8px 0;
+    padding: 0 16px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Custom styling untuk selectbox agar terlihat seperti menu */
+.sidebar .stSelectbox > div > div {
+    background-color: transparent;
+    border: none;
+}
+
+.sidebar .stSelectbox > div > div > div {
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.sidebar .stSelectbox > div > div > div:hover {
+    background-color: #fff2f2;
+    border-left-color: #ff4b4b;
+    transform: translateX(2px);
+}
+
+/* Hide default selectbox styling */
+.sidebar .stSelectbox > div > div > div[data-baseweb="select"] > div {
+    border: none;
+    background-color: transparent;
+    box-shadow: none;
+}
+
+/* Menu item styling */
+.nav-menu-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    margin: 2px 8px;
+    border-radius: 6px;
+    color: #495057;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    text-decoration: none;
+}
+
+.nav-menu-item:hover {
+    background-color: #f8f9fa;
+    color: #ff4b4b;
+    border-left-color: #ff4b4b;
+    transform: translateX(2px);
+}
+
+.nav-menu-item.active {
+    background-color: #fff2f2;
+    color: #ff4b4b;
+    font-weight: 600;
+    border-left-color: #ff4b4b;
+    box-shadow: 0 2px 4px rgba(255, 75, 75, 0.1);
+}
+
+.nav-menu-item .nav-icon {
+    margin-right: 10px;
+    font-size: 16px;
+}
+
+/* Logout button styling */
+.logout-section {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# Menu structure
+menu_structure = [
+    {"section": "PETISI", "items": [
+        {"key": "Lihat & Tandatangani Petisi", "icon": "📜", "label": "Lihat & Tandatangani"},
+        {"key": "🔍 Pencarian Petisi", "icon": "🔍", "label": "Pencarian Petisi"}, 
+        {"key": "Buat Petisi Baru", "icon": "📝", "label": "Buat Petisi Baru"},
+    ]},
+    {"section": "ANALITIK", "items": [
+        {"key": "📊 Statistik Petisi", "icon": "📊", "label": "Statistik & Analitik"},
+        {"key": "👤 Profil Saya", "icon": "👤", "label": "Profil Saya"},
+    ]},
+    {"section": "SISTEM", "items": [
+        {"key": "Lihat Blockchain", "icon": "⛓️", "label": "Lihat Blockchain"},
+        {"key": "Validasi Chain", "icon": "✅", "label": "Validasi Chain"},
+    ]}
+]
+
+# Inisialisasi selected menu
+if 'selected_menu' not in st.session_state:
+    st.session_state.selected_menu = "Lihat & Tandatangani Petisi"
+
+# Check redirect SEBELUM menampilkan menu
 if st.session_state.get('redirect_to_petition', False):
     st.session_state['redirect_to_petition'] = False
-    menu = "Lihat & Tandatangani Petisi"
-    
-    # Tetap tampilkan sidebar untuk navigasi
-    st.sidebar.info("📍 Menampilkan hasil pencarian", icon="🔍")
-    st.sidebar.radio(
-        "Navigasi:",
-        (
-            "Lihat & Tandatangani Petisi",
-            "🔍 Pencarian Petisi", 
-            "Buat Petisi Baru",
-            "📊 Statistik Petisi",
-            "👤 Profil Saya",
-            "Lihat Blockchain",
-            "Validasi Chain"
-        ),
-        index=0,  # Auto-select current page
-        disabled=False,
-        key="sidebar_after_redirect"
-    )
-else:
-    menu = st.sidebar.radio(
-        "Pilih Halaman:",
-        (
-            "Lihat & Tandatangani Petisi",
-            "🔍 Pencarian Petisi",
-            "Buat Petisi Baru",
-            "📊 Statistik Petisi",
-            "👤 Profil Saya",
-            "Lihat Blockchain",
-            "Validasi Chain"
-        ),
-        captions=[
-            "Lihat daftar petisi yang ada.",
-            "Cari petisi berdasarkan ID atau teks.",
-            "Mulai petisi Anda sendiri.",
-            "Visualisasi data penandatangan.",
-            "Aktivitas petisi Anda.",
-            "Inspeksi data mentah blockchain.",
-            "Periksa integritas data."
-        ]
-    )
+    st.session_state.selected_menu = "Lihat & Tandatangani Petisi"
 
-if st.sidebar.button("Logout", use_container_width=True):
+# Render navigation menu
+for section in menu_structure:
+    st.sidebar.markdown(f'<div class="nav-section">{section["section"]}</div>', unsafe_allow_html=True)
+    
+    for item in section["items"]:
+        # Create clickable menu item
+        is_active = st.session_state.selected_menu == item["key"]
+        
+        # Use container and button for each menu item
+        with st.sidebar.container():
+            if st.button(
+                f"{item['icon']} {item['label']}", 
+                key=f"nav_{item['key'].replace(' ', '_').replace('&', 'and').replace('🔍', 'search')}",
+                use_container_width=True,
+                type="primary" if is_active else "secondary",
+                help=f"Navigasi ke {item['label']}"
+            ):
+                st.session_state.selected_menu = item["key"]
+                st.rerun()
+
+# Logout section
+st.sidebar.markdown('<div class="logout-section"></div>', unsafe_allow_html=True)
+if st.sidebar.button("🚪 Logout", use_container_width=True, key="logout_btn"):
     for key in list(st.session_state.keys()):
         del st.session_state[key]
     st.rerun()
+
+# Set menu variable
+menu = st.session_state.selected_menu
 
 # --- Konten Halaman ---
 if menu == "🔍 Pencarian Petisi":
