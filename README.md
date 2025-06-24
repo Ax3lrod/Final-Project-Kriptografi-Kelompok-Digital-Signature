@@ -98,45 +98,50 @@ User disambut di halaman login, untuk login dapat memasukan username. Jika belum
 
 ## 2. Halaman Daftar Petisi
 Setelah user login, akan memasuki halaman yang berisi daftar-daftar petisi.
-![image](https://github.com/user-attachments/assets/7f5fc2a6-6271-4759-b5ac-6a487c571f3a)
+![image](https://github.com/user-attachments/assets/f60c4fd9-d147-472d-8a80-9a67cd61c26c)
 
 ## 4. Halaman Membuat Petisi
 User dapat mengakses halaman untuk membuat petisi melalui menu navigasi yang berada di sebelah kiri layar. Pada halaman ini, user diminta untuk memasukkan ID petisi dan isi lengkap (deskripsi) petisi. Untuk publikasi petisin dapat menekan tombol "simpan dan publikasi petisi".
-![image](https://github.com/user-attachments/assets/01553054-d3ab-4c36-a52e-90758a3ac706)
+![image](https://github.com/user-attachments/assets/d7073289-1f21-43e7-be13-3456cfdca62d)
+
+Setelah disimpan akan muncul tulisan seperti berikut.
+![image](https://github.com/user-attachments/assets/07478e07-b61c-4eb1-978e-5b406cc7a9f3)
 
 ## 5. Halaman Pencarian Petisi
 User dapat mencari petisi pada halaman ini dengan mencari ID petisi-nya.
-![image](https://github.com/user-attachments/assets/204123a4-cc43-45d4-b4b6-121958cfa92d)
+![image](https://github.com/user-attachments/assets/5d5b25dd-07f0-4d90-9c06-9ce6810b28ea)
 
 > User juga dapat melihat petisi pada halaman **Daftar Petisi**
-> ![image](https://github.com/user-attachments/assets/1ee0bfee-6a99-4a25-9cf9-76c1f7526acf)
+> ![image](https://github.com/user-attachments/assets/c239a1c4-690b-4d91-bf95-f6d59b69e205)
 
 ## 6. Menandatangani Petisi
 User dapat kembali ke halaman "Lihat dan Tandatangani Petisi" untuk menandatangani petisi. Caranya dengan menekan tombol "Tandatangani Petisi Ini Sekarang!".
-![image](https://github.com/user-attachments/assets/357ab6c7-bd36-410b-a11b-afa20b4be742)
+![image](https://github.com/user-attachments/assets/78fd419d-17cb-4628-b5a8-4584982d17e0)
 
 Jika sudah menekan tombol tersebut, akan menampilkan hasil seperti berikut.
-![image](https://github.com/user-attachments/assets/9018a975-35d4-4072-a53f-0d8c0218611c)
+![image](https://github.com/user-attachments/assets/5dc3ce8b-cd5c-400c-a6bc-0c922f720595)
 
 ## 7. Halaman Statistik Petisi
 User dapat memantau data jumlah penandatangan dan jumlah petisi dalam bentuk distribusi penandatangan, piechart, dan tren waktu.
 - Distribusi Penandatangan
-![image](https://github.com/user-attachments/assets/ce0a16db-dba4-4cb0-a98c-ca8be58d831c)
+![image](https://github.com/user-attachments/assets/a9d82baf-a8f7-4dcf-a438-d29db3c443e9)
 
 - Piechart
-![image](https://github.com/user-attachments/assets/be8e895d-b7dd-49e9-81a8-f417d7252e37)
+![image](https://github.com/user-attachments/assets/c1d1e0f7-f17d-4018-aeb5-672e454d4cc1)
 
 - Tren Waktu
-![image](https://github.com/user-attachments/assets/13863e22-460c-4692-8a1c-598d4e0b4314)
+![image](https://github.com/user-attachments/assets/8330d29b-2b84-4ab4-a302-5c05aba62cdd)
+> dapat dilihat grafik garis untuk tanda tangan setiap jam, setiap hari dan detail tanda tangan
 
 ## 8. Halaman Lihat Blockchain
 User dapat melihat transaksi yang dilakukan oleh semua pengguna pada halaman blockchain. Halaman ini berfungsi sebagai bentuk keamanan dan transparansi tanda tangan dengan menampilkan data mentah blockchain.
-![image](https://github.com/user-attachments/assets/1a05c13f-b7a2-4543-8e9b-bdf50138f2a7)
+![image](https://github.com/user-attachments/assets/8e841371-535b-4e67-8b9a-9cda8029f869)
 
 ## 9. Halaman Validasi Blockchain
 User dapat melakukan validasi blockchain, dimana berfungsi untuk memeriksa integritas data. Halaman ini dapat menampilkan jika seluruh struktur chain dan tanda tangan berupa valid atau tidak valid.
-![image](https://github.com/user-attachments/assets/82f765ee-0459-4572-a63e-fb874f691d36)
+![image](https://github.com/user-attachments/assets/1d7eb1f9-9dde-4761-98c6-35f99745dc27)
 
 ## 10. Halaman Profil Saya
 User dapat melihat aktivitasnya pada halaman ini. Halaman ini berisi berapa banyak petisi yang dibuat dan ditandatangani oleh user, serta list petisi-nya.
-![image](https://github.com/user-attachments/assets/8e83d177-4535-43d8-a37f-0f7d89534036)
+![image](https://github.com/user-attachments/assets/22fac580-4d2d-4ef7-bbc2-137a787c9f7c)
+
